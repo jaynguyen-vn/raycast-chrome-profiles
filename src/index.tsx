@@ -1,5 +1,15 @@
-import { ActionPanel, Action, List, Icon, showToast, Toast, closeMainWindow, popToRoot, Image } from "@raycast/api";
-import { execSync } from "child_process";
+import {
+  ActionPanel,
+  Action,
+  List,
+  Icon,
+  showToast,
+  Toast,
+  closeMainWindow,
+  popToRoot,
+  Image,
+} from "@raycast/api";
+import { execFileSync } from "child_process";
 import { readFileSync } from "fs";
 import { join } from "path";
 
@@ -19,7 +29,9 @@ interface LocalStateCache {
 
 function getLocalStateProfiles(): LocalStateCache {
   try {
-    const localState = JSON.parse(readFileSync(join(CHROME_DIR, "Local State"), "utf-8"));
+    const localState = JSON.parse(
+      readFileSync(join(CHROME_DIR, "Local State"), "utf-8"),
+    );
     return localState.profile?.info_cache || {};
   } catch {
     return {};
@@ -39,7 +51,9 @@ function getProfiles(): Profile[] {
       // Read avatar URL from per-profile Preferences
       let avatarUrl = "";
       try {
-        const prefs = JSON.parse(readFileSync(join(CHROME_DIR, dir, "Preferences"), "utf-8"));
+        const prefs = JSON.parse(
+          readFileSync(join(CHROME_DIR, dir, "Preferences"), "utf-8"),
+        );
         avatarUrl = prefs.account_info?.[0]?.picture_url || "";
       } catch {
         // no avatar
@@ -60,7 +74,12 @@ function profileIcon(profile: Profile): Image.ImageLike {
 }
 
 async function openProfile(profile: Profile) {
-  execSync(`open -na "Google Chrome" --args --profile-directory="${profile.dir}"`);
+  execFileSync("open", [
+    "-na",
+    "Google Chrome",
+    "--args",
+    `--profile-directory=${profile.dir}`,
+  ]);
   await showToast(Toast.Style.Success, `Opened ${profile.name}`);
   await closeMainWindow({ clearRootSearch: true });
   await popToRoot({ clearSearchBar: true });
@@ -72,7 +91,10 @@ export default function Command() {
   if (profiles.length === 0) {
     return (
       <List>
-        <List.EmptyView title="No Chrome profiles found" description="Make sure Google Chrome is installed" />
+        <List.EmptyView
+          title="No Chrome profiles found"
+          description="Make sure Google Chrome is installed"
+        />
       </List>
     );
   }
@@ -88,7 +110,11 @@ export default function Command() {
           icon={profileIcon(p)}
           actions={
             <ActionPanel>
-              <Action title="Open Profile" icon={Icon.Globe} onAction={() => openProfile(p)} />
+              <Action
+                title="Open Profile"
+                icon={Icon.Globe}
+                onAction={() => openProfile(p)}
+              />
             </ActionPanel>
           }
         />

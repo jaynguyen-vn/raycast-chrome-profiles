@@ -3,6 +3,7 @@
 ## [Fix profile launch on macOS 27 / Chrome 154] - {PR_MERGE_DATE}
 
 - Hand `--profile-directory` to a running Chrome through its binary instead of `open -na`, which stopped forwarding the flag; cold-start Chrome through `open -a`
+- Explain and link to Full Disk Access when macOS blocks reading Chrome's data folder (macOS 27+) instead of claiming Chrome is not installed
 
 ## [Initial Version] - {PR_MERGE_DATE}
 

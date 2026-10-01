@@ -31,6 +31,10 @@ Then in Raycast:
 3. Select a profile from the list → Enter
 4. Chrome opens with that profile, Raycast closes automatically
 
+## Permissions
+
+On macOS 27 and later, Chrome's data folder (`~/Library/Application Support/Google/Chrome`) is protected by the system. Grant Raycast **Full Disk Access** in System Settings → Privacy & Security → Full Disk Access, then restart Raycast. Without it the command shows "Raycast can't read Chrome's profile data" with a shortcut to that settings pane.
+
 ## How It Works
 
 - Reads Chrome's `Local State` file to get custom profile names

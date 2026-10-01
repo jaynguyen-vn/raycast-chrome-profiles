@@ -19,6 +19,11 @@ const execFileAsync = promisify(execFile);
 
 const CHROME_DIR = `${process.env.HOME}/Library/Application Support/Google/Chrome`;
 
+// Chrome's data folder is TCC-protected on macOS 27+, so Raycast needs Full
+// Disk Access to read it. This deep link opens the matching settings pane.
+const FULL_DISK_ACCESS_SETTINGS =
+  "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles";
+
 interface Profile {
   dir: string;
   name: string;
@@ -31,42 +36,47 @@ interface LocalStateCache {
   [dir: string]: { name?: string; gaia_name?: string; user_name?: string };
 }
 
+// Throws when Local State cannot be read: ENOENT means Chrome is not installed,
+// EPERM/EACCES means Raycast lacks permission to read Chrome's data.
 function getLocalStateProfiles(): LocalStateCache {
-  try {
-    const localState = JSON.parse(
-      readFileSync(join(CHROME_DIR, "Local State"), "utf-8"),
-    );
-    return localState.profile?.info_cache || {};
-  } catch {
-    return {};
-  }
+  const localState = JSON.parse(
+    readFileSync(join(CHROME_DIR, "Local State"), "utf-8"),
+  );
+  return localState.profile?.info_cache || {};
 }
 
 function getProfiles(): Profile[] {
+  const cache = getLocalStateProfiles();
+  const dirs = Object.keys(cache).sort();
+
+  return dirs.map((dir) => {
+    const info = cache[dir];
+    const customName = info.name || "";
+    const email = info.user_name || "";
+
+    // Read avatar URL from per-profile Preferences
+    let avatarUrl = "";
+    try {
+      const prefs = JSON.parse(
+        readFileSync(join(CHROME_DIR, dir, "Preferences"), "utf-8"),
+      );
+      avatarUrl = prefs.account_info?.[0]?.picture_url || "";
+    } catch {
+      // no avatar
+    }
+
+    return { dir, name: customName || dir, email, avatarUrl };
+  });
+}
+
+function loadProfiles(): {
+  profiles: Profile[];
+  error?: NodeJS.ErrnoException;
+} {
   try {
-    const cache = getLocalStateProfiles();
-    const dirs = Object.keys(cache).sort();
-
-    return dirs.map((dir) => {
-      const info = cache[dir];
-      const customName = info.name || "";
-      const email = info.user_name || "";
-
-      // Read avatar URL from per-profile Preferences
-      let avatarUrl = "";
-      try {
-        const prefs = JSON.parse(
-          readFileSync(join(CHROME_DIR, dir, "Preferences"), "utf-8"),
-        );
-        avatarUrl = prefs.account_info?.[0]?.picture_url || "";
-      } catch {
-        // no avatar
-      }
-
-      return { dir, name: customName || dir, email, avatarUrl };
-    });
-  } catch {
-    return [];
+    return { profiles: getProfiles() };
+  } catch (error) {
+    return { profiles: [], error: error as NodeJS.ErrnoException };
   }
 }
 
@@ -130,7 +140,27 @@ async function openProfile(profile: Profile) {
 }
 
 export default function Command() {
-  const profiles = getProfiles();
+  const { profiles, error } = loadProfiles();
+
+  if (error?.code === "EPERM" || error?.code === "EACCES") {
+    return (
+      <List>
+        <List.EmptyView
+          icon={Icon.Lock}
+          title="Raycast can't read Chrome's profile data"
+          description="Grant Raycast Full Disk Access in System Settings → Privacy & Security, then restart Raycast."
+          actions={
+            <ActionPanel>
+              <Action.Open
+                title="Open Full Disk Access Settings"
+                target={FULL_DISK_ACCESS_SETTINGS}
+              />
+            </ActionPanel>
+          }
+        />
+      </List>
+    );
+  }
 
   if (profiles.length === 0) {
     return (

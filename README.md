@@ -35,7 +35,7 @@ Then in Raycast:
 
 - Reads Chrome's `Local State` file to get custom profile names
 - Reads each profile's `Preferences` file for Google avatar URLs
-- Uses `open -na "Google Chrome" --args --profile-directory="..."` to launch
+- If Chrome is running, calls its binary with `--profile-directory="..."` and waits for the hand-off helper to exit (`open -na … --args` stopped forwarding the flag to a running Chrome on macOS 27 / Chrome 154); otherwise cold-starts Chrome with `open -a … --args`
 
 ## Development
 

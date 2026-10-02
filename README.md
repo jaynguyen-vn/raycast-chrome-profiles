@@ -2,6 +2,10 @@
 
 Quickly switch between Google Chrome profiles from Raycast.
 
+![Type cp in Raycast, pick a profile, and Chrome opens in that profile](.github/demo.gif)
+
+The profiles shown in the demo are placeholders.
+
 ## Features
 
 - List all Chrome profiles with custom names
@@ -56,3 +60,7 @@ npm run lint   # Lint code
 - Google Chrome installed
 - Raycast
 - Node.js >= 16
+
+## License
+
+[MIT](LICENSE)

@@ -1,5 +1,10 @@
 # Chrome Profiles Changelog
 
+## [Close Raycast while Chrome switches profiles] - {PR_MERGE_DATE}
+
+- Close Raycast as soon as the profile switch is handed to Chrome instead of waiting for Chrome's hand-off helper, which can stall for seconds
+- Ignore repeated Enter presses while a profile is opening so a single selection no longer opens several windows
+
 ## [Fix profile launch on macOS 27 / Chrome 154] - {PR_MERGE_DATE}
 
 - Hand `--profile-directory` to a running Chrome through its binary instead of `open -na`, which stopped forwarding the flag; cold-start Chrome through `open -a`

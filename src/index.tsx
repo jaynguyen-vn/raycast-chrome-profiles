@@ -10,7 +10,7 @@ import {
   Image,
   getApplications,
 } from "@raycast/api";
-import { execFile } from "child_process";
+import { execFile, spawn } from "child_process";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { promisify } from "util";
@@ -98,7 +98,39 @@ async function isChromeRunning(): Promise<boolean> {
   }
 }
 
+// Launching the Chrome binary hands its flags to the running instance through
+// a short-lived helper process. Started from Raycast, that helper sometimes
+// stalls for seconds before handing off, so it is not awaited: it runs detached
+// with no stdio and finishes on its own after the command unloads (Raycast
+// adopts leftover extension subprocesses instead of killing them).
+function handOffToRunningChrome(binary: string, args: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const helper = spawn(binary, args, { detached: true, stdio: "ignore" });
+    helper.once("error", reject);
+    helper.once("spawn", () => {
+      helper.unref();
+      resolve();
+    });
+  });
+}
+
+// Each extra Enter press while a profile is opening would start another
+// hand-off and open another Chrome window.
+let isOpening = false;
+
 async function openProfile(profile: Profile) {
+  if (isOpening) {
+    return;
+  }
+  isOpening = true;
+  try {
+    await launchProfile(profile);
+  } finally {
+    isOpening = false;
+  }
+}
+
+async function launchProfile(profile: Profile) {
   const chrome = (await getApplications()).find(
     (app) => app.bundleId === "com.google.Chrome",
   );
@@ -111,14 +143,11 @@ async function openProfile(profile: Profile) {
   try {
     if (await isChromeRunning()) {
       // `open -na … --args` no longer forwards the flag to a running Chrome
-      // (observed with macOS 27 / Chrome 154). Launching the binary directly
-      // hands the flag to the running instance; the helper exits in ~150ms once
-      // Chrome acknowledges. The hand-off is dropped if the caller goes away
-      // first, so wait for it before closing the Raycast window.
-      await execFileAsync(
+      // (observed with macOS 27 / Chrome 154), so hand it over through the
+      // binary instead.
+      await handOffToRunningChrome(
         join(chrome.path, "Contents", "MacOS", "Google Chrome"),
         [profileFlag],
-        { timeout: 5000 },
       );
     } else {
       // Cold start through LaunchServices so Chrome is not a child of this

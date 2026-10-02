@@ -39,7 +39,8 @@ On macOS 27 and later, Chrome's data folder (`~/Library/Application Support/Goog
 
 - Reads Chrome's `Local State` file to get custom profile names
 - Reads each profile's `Preferences` file for Google avatar URLs
-- If Chrome is running, calls its binary with `--profile-directory="..."` and waits for the hand-off helper to exit (`open -na … --args` stopped forwarding the flag to a running Chrome on macOS 27 / Chrome 154); otherwise cold-starts Chrome with `open -a … --args`
+- If Chrome is running, calls its binary with `--profile-directory="..."` as a detached hand-off helper and closes Raycast right away, without waiting for the helper (`open -na … --args` stopped forwarding the flag to a running Chrome on macOS 27 / Chrome 154); otherwise cold-starts Chrome with `open -a … --args`
+- Ignores repeated Enter presses while a profile is opening, so one selection opens one window
 
 ## Development
 

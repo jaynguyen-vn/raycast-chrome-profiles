@@ -16,6 +16,8 @@ The profiles shown in the demo are placeholders.
 
 ## Install
 
+Chrome Profiles is not in the Raycast Store yet, so install it from source. You need Node.js 22.14 or later.
+
 ```bash
 git clone https://github.com/jaynguyen-vn/raycast-chrome-profiles.git
 cd raycast-chrome-profiles
@@ -23,7 +25,10 @@ npm install
 npm run dev
 ```
 
+`npm run dev` imports the extension into Raycast. Once **Chrome Profiles** shows up in Raycast, you can stop it with `Ctrl + C` and the extension stays installed.
+
 Then in Raycast:
+
 1. Open **Raycast Settings** (`⌘ + ,`)
 2. Go to **Extensions** → find **Chrome Profiles**
 3. Set **Alias** to `cp` (or any shortcut you prefer)
@@ -43,7 +48,8 @@ On macOS 27 and later, Chrome's data folder (`~/Library/Application Support/Goog
 
 - Reads Chrome's `Local State` file to get custom profile names
 - Reads each profile's `Preferences` file for Google avatar URLs
-- If Chrome is running, calls its binary with `--profile-directory="..."` as a detached hand-off helper and closes Raycast right away, without waiting for the helper (`open -na … --args` stopped forwarding the flag to a running Chrome on macOS 27 / Chrome 154); otherwise cold-starts Chrome with `open -a … --args`
+- If Chrome is already running, runs Chrome's own binary with `--profile-directory=...` as a detached hand-off helper and closes Raycast without waiting for it. `open -na … --args` stopped passing the flag to a running Chrome on macOS 27 / Chrome 154.
+- If Chrome is not running, starts it with `open -a … --args --profile-directory=...`
 - Ignores repeated Enter presses while a profile is opening, so one selection opens one window
 
 ## Development
@@ -59,7 +65,11 @@ npm run lint   # Lint code
 - macOS
 - Google Chrome installed
 - Raycast
-- Node.js >= 16
+- Node.js >= 22.14 (to build the extension)
+
+## Contributing
+
+Issues and pull requests are welcome.
 
 ## License
 
